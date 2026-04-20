@@ -1,0 +1,7 @@
+# Exploding Kittens Digital Edition — Python dependencies
+
+# PostgreSQL driver (replaces the built-in sqlite3)
+psycopg2-binary>=2.9
+
+# Optional: for running tests
+pytest>=7.0
