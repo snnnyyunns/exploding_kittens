@@ -50,6 +50,21 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+### Step 3.1 - setup database
+1. create database
+```bash
+psql -U postgres -c "CREATE DATABASE exploding_kittens;"
+```
+
+2. Set your connection string:
+```bash
+# macOS / Linux
+export DATABASE_URL="postgresql://postgres:yourpassword@localhost:5432/exploding_kittens"
+
+# Windows
+set DATABASE_URL=postgresql://postgres:yourpassword@localhost:5432/exploding_kittens
+```
+
 ### Step 4 — Run the game
 
 ```bash
