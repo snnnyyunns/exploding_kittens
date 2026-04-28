@@ -19,9 +19,9 @@ from game.cards import Card, CardType, CAT_CARDS, create_base_deck
 from game.player import Player
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Enums / simple data structures
-# ────────────────────────────────────────────────────────────────────────
+
 
 class GamePhase(Enum):
     SETUP   = auto()
@@ -38,9 +38,9 @@ class ActionResult:
     data: dict = field(default_factory=dict)
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # GameEngine
-# ────────────────────────────────────────────────────────────────────────
+
 
 class GameEngine:
     """
@@ -52,9 +52,9 @@ class GameEngine:
         result = engine.draw_card()
     """
 
-    # ------------------------------------------------------------------ #
+
     # Construction / setup
-    # ------------------------------------------------------------------ #
+
 
     def __init__(self, player_names: list[str]) -> None:
         if not 2 <= len(player_names) <= 5:
@@ -102,9 +102,9 @@ class GameEngine:
         self._log_msg(f"Game started! {num} players. Good luck!")
         self._log_msg(f"🎴 {self.current_player.name}'s turn — {self.deck_size} cards in deck.")
 
-    # ------------------------------------------------------------------ #
+
     # Public properties
-    # ------------------------------------------------------------------ #
+
 
     @property
     def current_player(self) -> Player:
@@ -129,9 +129,9 @@ class GameEngine:
     def recent_log(self, n: int = 15) -> list[str]:
         return self._log[-n:]
 
-    # ------------------------------------------------------------------ #
+
     # Card playing
-    # ------------------------------------------------------------------ #
+
 
     def play_card(
         self,
@@ -176,7 +176,7 @@ class GameEngine:
 
         return ActionResult(False, f"Cannot manually play {card_type.value}.")
 
-    # ── individual effects ───────────────────────────────────────────────
+    #  individual effects 
 
     def _effect_attack(self, player: Player) -> ActionResult:
         player.remove_card(CardType.ATTACK)
@@ -239,9 +239,9 @@ class GameEngine:
             )
         return ActionResult(False, "Target had no cards — steal failed.")
 
-    # ------------------------------------------------------------------ #
+
     # Nope response (called by GUI when a player reactively plays Nope)
-    # ------------------------------------------------------------------ #
+
 
     def play_nope(self, noping_player: Player) -> ActionResult:
         """Called when a player reactively plays a Nope card."""
@@ -252,9 +252,9 @@ class GameEngine:
         self._log_msg(f"🚫 {noping_player.name} played Nope!")
         return ActionResult(True, f"{noping_player.name} played Nope!", "nope")
 
-    # ------------------------------------------------------------------ #
+
     # Drawing
-    # ------------------------------------------------------------------ #
+
 
     def draw_card(self) -> ActionResult:
         """
@@ -269,11 +269,11 @@ class GameEngine:
         card = self.deck.pop()
         self._log_msg(f"{player.name} draws a card...")
 
-        # ── Exploding Kitten ─────────────────────────────────────────────
+        #  Exploding Kitten 
         if card.card_type == CardType.EXPLODING_KITTEN:
             return self._handle_exploding_kitten(player, card)
 
-        # ── Normal card ─────────────────────────────────────────────────
+        #  Normal card 
         player.add_card(card)
         self._log_msg(f"  → {player.name} drew {card.icon} {card.name}.")
         self._consume_turn_after_draw(player)
@@ -305,9 +305,9 @@ class GameEngine:
         return ActionResult(True, f"💥 {player.name} exploded and is eliminated!",
                             "exploded")
 
-    # ------------------------------------------------------------------ #
+
     # Turn management helpers
-    # ------------------------------------------------------------------ #
+
 
     def _consume_turn_after_draw(self, player: Player) -> None:
         """Decrement turn counter after drawing; advance when exhausted."""
@@ -348,9 +348,9 @@ class GameEngine:
             if self.players[self.current_index].is_alive:
                 return
 
-    # ------------------------------------------------------------------ #
+
     # Win condition
-    # ------------------------------------------------------------------ #
+
 
     def _check_winner(self) -> None:
         alive = self.alive_players
@@ -359,9 +359,9 @@ class GameEngine:
             self.phase = GamePhase.ENDED
             self._log_msg(f"🏆 {self.winner.name} is the last survivor and WINS!")
 
-    # ------------------------------------------------------------------ #
+
     # Summary / serialisation
-    # ------------------------------------------------------------------ #
+
 
     def get_summary(self) -> dict:
         return {
@@ -372,9 +372,9 @@ class GameEngine:
             "turn_count": self.turn_number,
         }
 
-    # ------------------------------------------------------------------ #
+
     # Utility
-    # ------------------------------------------------------------------ #
+
 
     @staticmethod
     def _pop_first(deck: list[Card], card_type: CardType) -> Optional[Card]:

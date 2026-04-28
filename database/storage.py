@@ -19,7 +19,7 @@ import psycopg2
 import psycopg2.extras
 
 
-# ── Connection config ─────────────────────────────────────────────────────────
+#  Connection config 
 
 def _get_connection() -> "psycopg2.extensions.connection":
     database_url = os.environ.get("DATABASE_URL")
@@ -31,7 +31,7 @@ def _get_connection() -> "psycopg2.extensions.connection":
             port=int(os.environ.get("DB_PORT", 5432)),
             dbname=os.environ.get("DB_NAME", "exploding_kittens"),
             user=os.environ.get("DB_USER", "postgres"),
-            password=os.environ.get("DB_PASSWORD", ""),
+            password=os.environ.get("DB_PASSWORD", "ict555"),
         )
     conn.cursor_factory = psycopg2.extras.RealDictCursor
     return conn
@@ -67,7 +67,7 @@ class GameStorage:
         _init_db(conn)
         conn.close()
 
-    # ── Write ─────────────────────────────────────────────────────────────────
+    #  Write 
 
     def save_game(self, summary: dict, duration_secs: int) -> int:
         try:
@@ -102,7 +102,7 @@ class GameStorage:
         finally:
             conn.close()
 
-    # ── Read ──────────────────────────────────────────────────────────────────
+    #  Read 
 
     def get_all_games(self) -> list[tuple[Any, ...]]:
         try:

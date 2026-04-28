@@ -16,9 +16,9 @@ class Player:
         self.is_alive: bool = True
         self.turns_remaining: int = 1   # Increases to 2 when attacked
 
-    # ------------------------------------------------------------------ #
+
     # Hand management
-    # ------------------------------------------------------------------ #
+
 
     def add_card(self, card: Card) -> None:
         self.hand.append(card)
@@ -50,9 +50,9 @@ class Player:
     def card_count(self) -> int:
         return len(self.hand)
 
-    # ------------------------------------------------------------------ #
+
     # State helpers
-    # ------------------------------------------------------------------ #
+
 
     def eliminate(self) -> None:
         self.is_alive = False

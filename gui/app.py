@@ -19,9 +19,9 @@ from game.player import Player
 from database.storage import GameStorage
 from utils.helpers import validate_player_names, format_duration
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Design tokens
-# ────────────────────────────────────────────────────────────────────────
+
 
 T = {
     "bg":        "#1a1a2e",
@@ -47,9 +47,9 @@ FONT_CARD   = ("Segoe UI", 8, "bold")
 FONT_ICON   = ("Segoe UI Emoji", 20)
 FONT_ICON_S = ("Segoe UI Emoji", 14)
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Reusable widgets
-# ────────────────────────────────────────────────────────────────────────
+
 
 def flat_btn(
     parent,
@@ -90,9 +90,9 @@ def label(
     return tk.Label(parent, text=text, font=font, fg=fg, bg=bg, **kw)
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Card widget
-# ────────────────────────────────────────────────────────────────────────
+
 
 class CardWidget(tk.Canvas):
     """
@@ -131,8 +131,8 @@ class CardWidget(tk.Canvas):
         self.create_rectangle(0, 0, w, h, fill=self.card.color, outline="")
 
         # Subtle diagonal stripe overlay for texture
-        for x in range(-h, w, 14):
-            self.create_line(x, 0, x + h, h, fill="#ffffff15", width=6)
+        # for x in range(-h, w, 14):
+        #     self.create_line(x, 0, x + h, h, fill="#222222", width=6)
 
         # Icon
         self.create_text(w // 2, h // 2 - 12, text=self.card.icon,
@@ -155,9 +155,9 @@ class CardWidget(tk.Canvas):
                              font=("Segoe UI", 7, "bold"), fill="#000")
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Screen base
-# ────────────────────────────────────────────────────────────────────────
+
 
 class Screen(tk.Frame):
     """Base class for all top-level screens."""
@@ -174,9 +174,9 @@ class Screen(tk.Frame):
         return f
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Main Menu
-# ────────────────────────────────────────────────────────────────────────
+
 
 class MainMenuScreen(Screen):
     def __init__(self, parent: "App") -> None:
@@ -206,9 +206,9 @@ class MainMenuScreen(Screen):
               font=FONT_SMALL, fg=T["text_dim"]).pack(pady=(30, 0))
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Setup Screen
-# ────────────────────────────────────────────────────────────────────────
+
 
 class SetupScreen(Screen):
     def __init__(self, parent: "App") -> None:
@@ -257,9 +257,9 @@ class SetupScreen(Screen):
         app.start_game(names)
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Game Screen
-# ────────────────────────────────────────────────────────────────────────
+
 
 class GameScreen(Screen):
     """
@@ -286,16 +286,16 @@ class GameScreen(Screen):
         self._build()
         self.refresh()
 
-    # ------------------------------------------------------------------ #
+
     # Layout construction
-    # ------------------------------------------------------------------ #
+
 
     def _build(self) -> None:
-        # ── Other players bar ───────────────────────────────────────────
+        #  Other players bar 
         self._players_bar = tk.Frame(self, bg=T["surface"], pady=4)
         self._players_bar.pack(fill="x")
 
-        # ── Middle row ──────────────────────────────────────────────────
+        #  Middle row 
         mid = tk.Frame(self, bg=T["bg"])
         mid.pack(fill="both", expand=True, padx=10, pady=6)
 
@@ -349,12 +349,12 @@ class GameScreen(Screen):
         sb = tk.Scrollbar(log_frame, command=self._log_box.yview)
         self._log_box.configure(yscrollcommand=sb.set)
 
-        # ── Turn banner ─────────────────────────────────────────────────
+        #  Turn banner 
         self._turn_banner = label(self, "", font=FONT_H2,
                                   bg=T["accent"], fg=T["white"], pady=6)
         self._turn_banner.pack(fill="x", padx=10, pady=(2, 0))
 
-        # ── Hand header ─────────────────────────────────────────────────
+        #  Hand header 
         hh = tk.Frame(self, bg=T["bg"])
         hh.pack(fill="x", padx=10, pady=(6, 2))
 
@@ -379,7 +379,7 @@ class GameScreen(Screen):
                  bg="#3a3a5c", font=("Segoe UI", 9),
                  padx=10, pady=5).pack(side="left", padx=4)
 
-        # ── Hand area ────────────────────────────────────────────────────
+        #  Hand area 
         hand_outer = tk.Frame(self, bg=T["bg"])
         hand_outer.pack(fill="x", padx=10, pady=(0, 8))
 
@@ -399,9 +399,9 @@ class GameScreen(Screen):
             scrollregion=self._hand_canvas.bbox("all")
         ))
 
-    # ------------------------------------------------------------------ #
+
     # Refresh / render
-    # ------------------------------------------------------------------ #
+
 
     def refresh(self) -> None:
         if self.engine.is_over:
@@ -468,9 +468,9 @@ class GameScreen(Screen):
 
         self._play_btn.config(state="normal" if self._selected else "disabled")
 
-    # ------------------------------------------------------------------ #
+
     # Card selection
-    # ------------------------------------------------------------------ #
+
 
     def _toggle_card(self, card: Card) -> None:
         ct = card.card_type
@@ -502,9 +502,9 @@ class GameScreen(Screen):
         self._selected.clear()
         self._render_hand(self.engine.current_player)
 
-    # ------------------------------------------------------------------ #
+
     # Card play
-    # ------------------------------------------------------------------ #
+
 
     def _on_play(self) -> None:
         if not self._selected:
@@ -513,14 +513,14 @@ class GameScreen(Screen):
         ct = self._selected[0]
         player = self.engine.current_player
 
-        # ── Nope check for other players ────────────────────────────────
+        #  Nope check for other players 
         if ct not in (CardType.DEFUSE, CardType.EXPLODING_KITTEN):
             if self._prompt_nope(player, ct):
                 self._selected.clear()
                 self.refresh()
                 return
 
-        # ── Cat pair: choose target ─────────────────────────────────────
+        #  Cat pair: choose target 
         target: Optional[Player] = None
         if ct in CAT_CARDS:
             target = self._pick_target()
@@ -533,7 +533,7 @@ class GameScreen(Screen):
             messagebox.showerror("Cannot Play", result.message, parent=self)
             return
 
-        # ── See the Future pop-up ───────────────────────────────────────
+        #  See the Future pop-up 
         if result.effect == "see_future":
             top3 = result.data.get("top3", [])
             body = (
@@ -543,7 +543,7 @@ class GameScreen(Screen):
             messagebox.showinfo("🔮 See the Future",
                                 f"Top cards (closest first):\n{body}", parent=self)
 
-        # ── Cat steal notification ───────────────────────────────────────
+        #  Cat steal notification 
         if result.effect == "cat_steal":
             stolen = result.data.get("stolen_card", "a card")
             messagebox.showinfo("🐱 Cat Steal!",
@@ -611,9 +611,9 @@ class GameScreen(Screen):
         dialog.wait_window()
         return chosen[0]
 
-    # ------------------------------------------------------------------ #
+
     # Draw
-    # ------------------------------------------------------------------ #
+
 
     def _on_draw(self) -> None:
         result = self.engine.draw_card()
@@ -642,9 +642,9 @@ class GameScreen(Screen):
         else:
             self.refresh()
 
-    # ------------------------------------------------------------------ #
+
     # Forfeit
-    # ------------------------------------------------------------------ #
+
 
     def _forfeit(self) -> None:
         p = self.engine.current_player
@@ -665,9 +665,9 @@ class GameScreen(Screen):
             self._selected.clear()
             self.refresh()
 
-    # ------------------------------------------------------------------ #
+
     # End game
-    # ------------------------------------------------------------------ #
+
 
     def _end_game(self) -> None:
         summary = self.engine.get_summary()
@@ -694,9 +694,9 @@ class GameScreen(Screen):
         app.show_main_menu()
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # History Screen
-# ────────────────────────────────────────────────────────────────────────
+
 
 class HistoryScreen(Screen):
     def __init__(self, parent: "App", storage: GameStorage) -> None:
@@ -783,9 +783,9 @@ class HistoryScreen(Screen):
                  padx=20, pady=10).pack(pady=16)
 
 
-# ────────────────────────────────────────────────────────────────────────
+
 # Application root
-# ────────────────────────────────────────────────────────────────────────
+
 
 class App(tk.Tk):
     """Root Tk window — owns screen navigation and shared resources."""
@@ -804,9 +804,9 @@ class App(tk.Tk):
         self._screen: Optional[Screen] = None
         self.show_main_menu()
 
-    # ------------------------------------------------------------------ #
+
     # Navigation
-    # ------------------------------------------------------------------ #
+
 
     def _set_screen(self, screen: Screen) -> None:
         if self._screen is not None:
