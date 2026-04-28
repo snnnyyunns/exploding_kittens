@@ -516,6 +516,9 @@ class GameScreen(Screen):
         #  Nope check for other players 
         if ct not in (CardType.DEFUSE, CardType.EXPLODING_KITTEN):
             if self._prompt_nope(player, ct):
+                noped = self.engine.consume_noped_play(ct)
+                if not noped.success:
+                    messagebox.showerror("Nope Handling Error", noped.message, parent=self)
                 self._selected.clear()
                 self.refresh()
                 return

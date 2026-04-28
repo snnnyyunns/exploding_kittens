@@ -252,6 +252,28 @@ class GameEngine:
         self._log_msg(f"🚫 {noping_player.name} played Nope!")
         return ActionResult(True, f"{noping_player.name} played Nope!", "nope")
 
+    def consume_noped_play(self, card_type: CardType) -> ActionResult:
+        """
+        Consume a card that was attempted but canceled by Nope.
+        The played card is still discarded; only its effect is canceled.
+        """
+        player = self.current_player
+        if card_type in CAT_CARDS:
+            if not player.has_pair(card_type):
+                return ActionResult(False, f"{player.name} does not have a pair of {card_type.value}.")
+            player.remove_card(card_type)
+            player.remove_card(card_type)
+            self.discard_pile.extend([Card(card_type), Card(card_type)])
+            self._log_msg(f"🚫 {player.name}'s {card_type.value} pair was Noped.")
+            return ActionResult(True, f"{card_type.value} pair canceled by Nope.", "noped")
+
+        if not player.has_card(card_type):
+            return ActionResult(False, f"{player.name} does not have {card_type.value}.")
+        player.remove_card(card_type)
+        self.discard_pile.append(Card(card_type))
+        self._log_msg(f"🚫 {player.name}'s {card_type.value} was Noped.")
+        return ActionResult(True, f"{card_type.value} canceled by Nope.", "noped")
+
 
     # Drawing
 
