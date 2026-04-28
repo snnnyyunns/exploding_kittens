@@ -1,5 +1,17 @@
 """
 player.py — Player model for Exploding Kittens.
+
+Step-by-step:
+1) Store each player's identity (`name`, `player_id`) and runtime state
+   (`hand`, `is_alive`, `turns_remaining`).
+2) Provide hand operations:
+   - add cards,
+   - remove first card of a given type,
+   - check/count card types,
+   - verify pair availability for cat cards.
+3) Support random-card stealing for cat-pair effects.
+4) Expose lightweight helpers for card count and debug representation.
+5) Handle elimination by marking player dead and clearing hand.
 """
 
 import random

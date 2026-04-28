@@ -8,6 +8,25 @@ Handles:
   - Exploding Kitten draw logic (defuse / elimination)
   - Win condition checking
   - Game-log accumulation
+
+Step-by-step runtime flow:
+1) `GameEngine.__init__` validates players, builds player objects, and calls
+   `_setup()`.
+2) `_setup()` creates a base deck, deals opening hands (including a guaranteed
+   Defuse per player), inserts Exploding Kittens, shuffles, then starts play.
+3) On each turn, UI calls either:
+   - `play_card()` to execute one selected action/card effect, or
+   - `draw_card()` to end progress of the turn by drawing from deck top.
+4) Card effects update hands/discard pile and may alter turn flow
+   (e.g., Attack/Skip) or reveal data (See the Future) or steal cards
+   (cat pairs).
+5) `draw_card()` handles normal draws and Exploding Kitten draws:
+   - with Defuse: consume Defuse and reinsert EK into deck,
+   - without Defuse: eliminate player and check winner.
+6) Turn helpers (`_consume_turn_*`, `_advance_to_next`, `_skip_to_next_alive`)
+   maintain remaining turns and rotate to the next alive player.
+7) `_check_winner()` ends the game when one player remains, and `get_summary()`
+   returns final data for persistence/UX.
 """
 
 import random
@@ -92,7 +111,8 @@ class GameEngine:
         # Remaining deck cards go into the draw pile
         self.deck = deck
 
-        # Insert (n-1) Exploding Kittens so exactly 1 player survives
+        # Insert (n-1) Exploding Kittens so exactly 1 player survives.
+        # Defuse cards are already in hands/deck from create_base_deck().
         for _ in range(num - 1):
             self.deck.append(Card(CardType.EXPLODING_KITTEN))
         random.shuffle(self.deck)
@@ -182,7 +202,8 @@ class GameEngine:
         player.remove_card(CardType.ATTACK)
         self.discard_pile.append(Card(CardType.ATTACK))
         self._log_msg(f"⚔️  {player.name} plays Attack!")
-        # End turn without drawing; next player inherits 2 turns
+        # End turn without drawing; next player inherits 2 turns.
+        # "attacked=True" is interpreted by _advance_to_next().
         self._advance_to_next(attacked=True)
         return ActionResult(True, "Attack! Next player takes 2 turns.", "attack")
 
@@ -197,6 +218,8 @@ class GameEngine:
         player.remove_card(CardType.SEE_THE_FUTURE)
         self.discard_pile.append(Card(CardType.SEE_THE_FUTURE))
         self._log_msg(f"🔮 {player.name} peeks at the top of the deck.")
+        # deck.pop() draws from the end, so reverse the tail to show
+        # "next card to draw" first in the returned preview.
         top3 = [c.name for c in reversed(self.deck[-3:])] if self.deck else []
         return ActionResult(True, "Peeked at top 3 cards.", "see_future",
                             {"top3": top3})
@@ -259,6 +282,8 @@ class GameEngine:
         """
         player = self.current_player
         if card_type in CAT_CARDS:
+            # Cat cards are played as pairs, so a canceled pair still discards
+            # two matching cards even though no steal happens.
             if not player.has_pair(card_type):
                 return ActionResult(False, f"{player.name} does not have a pair of {card_type.value}.")
             player.remove_card(card_type)
@@ -288,6 +313,7 @@ class GameEngine:
         if not self.deck:
             return ActionResult(False, "The deck is empty!")
 
+        # The "top" of deck is modeled as the list tail for efficient pop().
         card = self.deck.pop()
         self._log_msg(f"{player.name} draws a card...")
 
@@ -308,7 +334,7 @@ class GameEngine:
             # Defuse it
             player.remove_card(CardType.DEFUSE)
             self.discard_pile.append(Card(CardType.DEFUSE))
-            # Re-insert EK at a random position
+            # Re-insert EK at a random position (including top or bottom).
             insert_pos = random.randint(0, len(self.deck))
             self.deck.insert(insert_pos, bomb)
             self._log_msg(f"🔧 {player.name} used a Defuse! EK back in the deck.")
@@ -347,10 +373,13 @@ class GameEngine:
         """Move current_index to the next alive player."""
         self._skip_to_next_alive()
         if attacked:
+            # Attack stacks by adding one extra pending turn to the next player.
+            # Ensure they have at least 2 turns total after being attacked.
             self.current_player.turns_remaining += 1   # stacking attack
             if self.current_player.turns_remaining < 2:
                 self.current_player.turns_remaining = 2
         else:
+            # Normal hand-off guarantees at least one playable turn.
             if self.current_player.turns_remaining < 1:
                 self.current_player.turns_remaining = 1
         self.turn_number += 1

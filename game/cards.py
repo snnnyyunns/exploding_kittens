@@ -1,5 +1,19 @@
 """
 cards.py — Card definitions, types, and deck creation for Exploding Kittens.
+
+Step-by-step:
+1) Define `CardType` enum values for every playable and special card.
+2) Define shared metadata maps (`CARD_COLORS`, `CARD_ICONS`,
+   `CARD_DESCRIPTIONS`) keyed by card type for UI display and text.
+3) Define `CAT_CARDS`, the subset that must be played as pairs.
+4) Provide the `Card` model that materializes metadata for one card instance.
+5) Build a shuffled base deck in `create_base_deck()`:
+   - validate player count,
+   - add action cards and cat cards in fixed counts,
+   - add defuse cards based on number of players,
+   - shuffle and return.
+6) Exploding Kitten cards are intentionally not included here; the engine
+   inserts them later after dealing opening hands.
 """
 
 import random

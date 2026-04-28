@@ -6,6 +6,24 @@ Screens:
     SetupScreen     → enter player names
     GameScreen      → main gameplay
     HistoryScreen   → leaderboard / game records
+
+Step-by-step UI flow:
+1) Define a shared theme (`T`) and font constants used by all screens.
+2) Define small reusable widget factories (`flat_btn`, `label`) for
+   consistent visual style.
+3) Define `CardWidget` for clickable card rendering in the player's hand.
+4) Define screen classes:
+   - `MainMenuScreen`: start/history/quit navigation,
+   - `SetupScreen`: collect and validate 2-5 player names,
+   - `GameScreen`: render live game state and handle card play/draw/forfeit,
+   - `HistoryScreen`: show stored game records and leaderboard.
+5) During gameplay, `GameScreen` bridges UI actions to `GameEngine` calls,
+   updates the log/hand/banner, and manages interaction dialogs
+   (Nope prompts, target picker, draw result popups).
+6) On game end, `GameScreen` saves summary data through `GameStorage` and
+   returns to main menu after showing final results.
+7) `App` (Tk root) owns shared storage and screen navigation, swapping one
+   active screen frame at a time.
 """
 
 import tkinter as tk
@@ -280,9 +298,11 @@ class GameScreen(Screen):
         super().__init__(parent)
         self.engine = engine
         self.storage = storage
-        self._selected: list[CardType] = []          # selected card types
+        # Selection stores card *types* (not Card instances) so duplicate cards
+        # can be represented cleanly (e.g., two Tacocats for a cat-pair play).
+        self._selected: list[CardType] = []
         self._start_time = datetime.datetime.now()
-        self._draw_pending = True                     # must draw before ending turn
+        self._draw_pending = True
         self._build()
         self.refresh()
 
@@ -449,7 +469,9 @@ class GameScreen(Screen):
         for w in self._hand_inner.winfo_children():
             w.destroy()
 
-        selected_set = set(self._selected)
+        # Count selected types to mark only the intended number of duplicates.
+        # Example: if one "Skip" is selected and player has two Skip cards,
+        # only one rendered card should appear highlighted.
         sel_counts: dict[CardType, int] = {}
         for ct in self._selected:
             sel_counts[ct] = sel_counts.get(ct, 0) + 1
@@ -474,7 +496,6 @@ class GameScreen(Screen):
 
     def _toggle_card(self, card: Card) -> None:
         ct = card.card_type
-        current = sel_count = self._selected.count(ct)
 
         if ct in self._selected:
             # De-select one
@@ -493,6 +514,7 @@ class GameScreen(Screen):
                 self._selected.clear()
                 self._selected.extend([ct, ct])
             else:
+                # Non-cat actions are always single-card plays in this ruleset.
                 self._selected.clear()
                 self._selected.append(ct)
 
@@ -513,7 +535,7 @@ class GameScreen(Screen):
         ct = self._selected[0]
         player = self.engine.current_player
 
-        #  Nope check for other players 
+        # Give other players a reactive "Nope?" window before applying effect.
         if ct not in (CardType.DEFUSE, CardType.EXPLODING_KITTEN):
             if self._prompt_nope(player, ct):
                 noped = self.engine.consume_noped_play(ct)
@@ -573,6 +595,7 @@ class GameScreen(Screen):
             if answer:
                 r = self.engine.play_nope(p)
                 messagebox.showinfo("Noped!", r.message, parent=self)
+                # First accepted Nope cancels the action immediately.
                 return True
         return False
 
@@ -594,6 +617,7 @@ class GameScreen(Screen):
         dialog.grab_set()
         dialog.resizable(False, False)
 
+        # Mutable holder lets button callbacks assign a value before dialog close.
         chosen: list[Optional[Player]] = [None]
 
         label(dialog, "Steal from which player?",
@@ -681,6 +705,7 @@ class GameScreen(Screen):
         try:
             self.storage.save_game(summary, duration)
         except Exception as exc:
+            # Persistence failure should not block showing end-game UX.
             print(f"[GameScreen] Failed to save game: {exc}")
 
         elim = summary.get("eliminated", [])

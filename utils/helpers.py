@@ -1,5 +1,14 @@
 """
 helpers.py — Shared utility functions for Exploding Kittens.
+
+Step-by-step:
+1) Provide formatting helpers for UI-facing text (`format_duration`,
+   `wrap_text`, `timestamp_now`).
+2) Provide numeric safety helpers (`clamp`, `safe_int`) to avoid repetitive
+   guard logic throughout the app.
+3) Provide grammar helper (`pluralise`) for clean dynamic labels.
+4) Provide setup validation (`validate_player_names`) so the UI can reject
+   invalid player lists early with user-friendly error messages.
 """
 
 import datetime

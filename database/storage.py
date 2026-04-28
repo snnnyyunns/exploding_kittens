@@ -9,6 +9,20 @@ Set the DATABASE_URL environment variable before running, e.g.:
 
 Or configure individual variables:
     DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD
+
+Step-by-step:
+1) `_get_connection()` reads environment configuration and opens a PostgreSQL
+   connection (prefer `DATABASE_URL`, otherwise fallback DB_* variables).
+2) `_init_db()` creates required tables (`games`, `game_players`) if missing.
+3) `GameStorage.__init__()` ensures schema exists at startup.
+4) `save_game()` writes one game summary row, then writes all participating
+   players with survive/death flags.
+5) Read methods expose reporting views:
+   - `get_all_games()` for history table rows,
+   - `get_statistics()` for aggregate metrics,
+   - `get_player_wins()` for leaderboard counts.
+6) Each DB operation handles psycopg2 errors gracefully and closes connections
+   in `finally` blocks.
 """
 
 import os
@@ -24,8 +38,10 @@ import psycopg2.extras
 def _get_connection() -> "psycopg2.extensions.connection":
     database_url = os.environ.get("DATABASE_URL")
     if database_url:
+        # Preferred production-style configuration path.
         conn = psycopg2.connect(database_url)
     else:
+        # Fallback for local development when DATABASE_URL is not set.
         conn = psycopg2.connect(
             host=os.environ.get("DB_HOST", "localhost"),
             port=int(os.environ.get("DB_PORT", 5432)),
@@ -89,6 +105,7 @@ class GameStorage:
                 )
                 game_id: int = cur.fetchone()["id"]
 
+                # Bulk insert all players tied to this game id in one query.
                 psycopg2.extras.execute_values(
                     cur,
                     "INSERT INTO game_players (game_id, name, survived) VALUES %s",
